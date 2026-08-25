@@ -214,7 +214,7 @@ jobs:
     outputs:
       onnx_sha256: ${{ steps.resolve.outputs.onnx_sha256 }}
     env:
-      HF_REPO: sunnypilot/sunnypilot_models_v1
+      HF_REPO: MarciMilligan/sunnypilot_models_v1
       HF_DEFAULTS_PATH: models/defaults/big
     steps:
       - uses: actions/checkout@v4
@@ -273,7 +273,7 @@ jobs:
     outputs:
       driving_onnx_sha256: ${{ steps.resolve.outputs.driving_onnx_sha256 }}
     env:
-      HF_REPO: sunnypilot/sunnypilot_models_v1
+      HF_REPO: MarciMilligan/sunnypilot_models_v1
       HF_DEFAULTS_PATH: models/defaults/small
     steps:
       - uses: actions/checkout@v4
@@ -337,7 +337,7 @@ jobs:
     outputs:
       dm_onnx_sha256: ${{ steps.resolve.outputs.dm_onnx_sha256 }}
     env:
-      HF_REPO: sunnypilot/sunnypilot_models_v1
+      HF_REPO: MarciMilligan/sunnypilot_models_v1
       HF_DEFAULTS_PATH: models/defaults/dm
     steps:
       - uses: actions/checkout@v4
@@ -426,7 +426,7 @@ jobs:
 
       - name: Download default model chunks from HF
         env:
-          HF_REPO: sunnypilot/sunnypilot_models_v1
+          HF_REPO: MarciMilligan/sunnypilot_models_v1
         run: |
           set -o pipefail
           MODELS_DIR="${{ env.OUTPUT_DIR }}/openpilot/selfdrive/modeld/models"
@@ -468,7 +468,7 @@ jobs:
       - name: Download big model chunks from HF
         if: ${{ needs.prepare_chestnut.result == 'success' }}
         env:
-          HF_REPO: sunnypilot/sunnypilot_models_v1
+          HF_REPO: MarciMilligan/sunnypilot_models_v1
           HF_DEFAULTS_PATH: models/defaults/big
         run: |
           ONNX_HASH="${{ needs.prepare_chestnut.outputs.onnx_sha256 }}"
@@ -495,7 +495,7 @@ jobs:
       - name: Inject models into chestnut
         if: ${{ needs.prepare_chestnut.result == 'success' }}
         env:
-          HF_REPO: sunnypilot/sunnypilot_models_v1
+          HF_REPO: MarciMilligan/sunnypilot_models_v1
         run: |
           CHESTNUT_MODELS="${{ github.workspace }}/chestnut_output/openpilot/selfdrive/modeld/models"
           cp big_model_chunks/* "$CHESTNUT_MODELS/"
