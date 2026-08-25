@@ -206,6 +206,8 @@ jobs:
           git pull origin gh-pages
 
       - name: Run json_parser.py to update JSON
+        env:
+          HF_REPO: ${{ inputs.hf_repo }}
         run: |
           FOLDER="${{ inputs.model_folder }}"
           if [ "$FOLDER" = "Other" ]; then
