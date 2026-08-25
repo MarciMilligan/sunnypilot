@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  HF_REPO: sunnypilot/sunnypilot_models_v1
+  HF_REPO: MarciMilligan/sunnypilot_models_v1
 
 jobs:
   resolve:
