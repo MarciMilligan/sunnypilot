@@ -1,7 +1,7 @@
 name: sunnypilot prebuilt action
 
 env:
-  BUILD_DIR: "/data/openpilot"
+  BUILD_DIR: "/data/openpilot-ci-build"
   OUTPUT_DIR: ${{ github.workspace }}/output
   CI_DIR: ${{ github.workspace }}/release/ci
   PUBLIC_REPO_URL: "https://github.com/sunnypilot/sunnypilot"
