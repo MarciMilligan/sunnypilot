@@ -1,5 +1,7 @@
 import io
 import json
+import math
+import os
 import pickle
 import shutil
 import struct
@@ -64,3 +66,41 @@ def chestnut_compiled() -> bool:
 
 def chestnut_ready(state) -> bool:
   return state.supplyVoltage >= CHESTNUT_POWERED_VOLTAGE and not state.supplyFault and state.pcieLtssm == CHESTNUT_PCIE_READY
+
+
+def apply_chestnut_power_limit() -> float:
+  """Configure tinygrad's eGPU power cap before the AMD device is opened."""
+  # imported lazily: this module is imported by SConscript before libparams_c is built
+  from openpilot.common.params import Params
+
+  params = Params()
+  configured_power_limit = os.getenv("AM_POWER_LIMIT") or params.get("ChestnutPowerLimitW")
+
+  try:
+    power_limit_watts = float(configured_power_limit)
+  except (TypeError, ValueError):
+    power_limit_watts = 0.0
+  if not math.isfinite(power_limit_watts) or power_limit_watts < 0:
+    power_limit_watts = 0.0
+
+  gpu_was_power_limited = params.get("ChestnutPowerLimitActive")
+
+  if power_limit_watts > 0:
+    os.environ["AM_POWER_LIMIT"] = str(power_limit_watts)
+    if gpu_was_power_limited is not True:
+      params.put_bool("ChestnutPowerLimitActive", True, block=True)
+  else:
+    os.environ.pop("AM_POWER_LIMIT", None)
+    # A partial tinygrad boot keeps the previous SMU limit, so force a full reset.
+    if gpu_was_power_limited is not False:
+      os.environ["AM_RESET"] = "1"
+  return power_limit_watts
+
+
+def confirm_chestnut_power_limit_reset(power_limit_watts: float) -> None:
+  if power_limit_watts > 0:
+    return
+
+  from openpilot.common.params import Params
+
+  Params().put_bool("ChestnutPowerLimitActive", False, block=True)

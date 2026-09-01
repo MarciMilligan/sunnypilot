@@ -16,7 +16,7 @@ from tinygrad.tensor import Tensor
 
 import openpilot.cereal.messaging as messaging
 from openpilot.common.hardware import COMMA_HARDWARE
-from openpilot.selfdrive.modeld.helpers import chestnut_present, load_oob
+from openpilot.selfdrive.modeld.helpers import apply_chestnut_power_limit, chestnut_present, confirm_chestnut_power_limit_reset, load_oob
 from openpilot.cereal import log
 from opendbc.car.structs import car
 from openpilot.cereal.services import SERVICE_LIST
@@ -327,6 +327,8 @@ def main(demo=False):
   CHESTNUT = chestnut_present()
   if CHESTNUT:
     os.environ['HCQDEV_WAIT_TIMEOUT_MS'] = '3000'
+    if (power_limit_watts := apply_chestnut_power_limit()) > 0:
+      cloudlog.warning(f"chestnut power limit set to {power_limit_watts:.0f}W")
 
   params = Params()
   params.put_bool("ChestnutLoading", CHESTNUT)
@@ -366,6 +368,7 @@ def main(demo=False):
       try:
         m = ModelState(cam_w=vipc_client_main.width, cam_h=vipc_client_main.height, chestnut=True)
         m.warmup()
+        confirm_chestnut_power_limit_reset(power_limit_watts)
         big_model = m
       except Exception:
         cloudlog.exception("chestnut load failed")

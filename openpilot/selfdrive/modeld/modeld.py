@@ -33,7 +33,8 @@ from openpilot.selfdrive.modeld.fill_model_msg import fill_model_msg, fill_drivi
 from openpilot.common.file_chunker import open_file_chunked
 from openpilot.common.hardware.usb import CHESTNUT_USB_IDS
 from openpilot.selfdrive.modeld.constants import ModelConstants, Plan
-from openpilot.selfdrive.modeld.helpers import chestnut_present, chestnut_compiled, chestnut_ready, modeld_pkl_path, load_oob
+from openpilot.selfdrive.modeld.helpers import (apply_chestnut_power_limit, chestnut_present, chestnut_compiled, chestnut_ready,
+                                                confirm_chestnut_power_limit_reset, modeld_pkl_path, load_oob)
 
 from openpilot.sunnypilot.livedelay.helpers import get_lat_delay
 from openpilot.sunnypilot.modeld_v2.modeld_base import ModelStateBase
@@ -255,6 +256,8 @@ def main(demo=False):
       CHESTNUT = msg is not None and msg.valid and chestnut_ready(msg.chestnutState)
   if CHESTNUT:
     os.environ['HCQDEV_WAIT_TIMEOUT_MS'] = '3000'
+    if (power_limit_watts := apply_chestnut_power_limit()) > 0:
+      cloudlog.warning(f"chestnut power limit set to {power_limit_watts:.0f}W")
   params = Params()
   params.put_bool("ChestnutLoading", CHESTNUT)
   if chestnut_available and not CHESTNUT:
@@ -297,6 +300,7 @@ def main(demo=False):
       try:
         m = ModelState(vipc_client_main.width, vipc_client_main.height, True)
         m.warmup()
+        confirm_chestnut_power_limit_reset(power_limit_watts)
         big_model = m
       except Exception:
         cloudlog.exception("big model load failed")
