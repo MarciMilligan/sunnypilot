@@ -19,9 +19,12 @@ from openpilot.system.ui.widgets.confirm_dialog import ConfirmDialog
 from openpilot.system.ui.widgets.list_view import button_item
 
 from openpilot.system.ui.sunnypilot.widgets.html_render import HtmlModalSP
-from openpilot.system.ui.sunnypilot.widgets.list_view import toggle_item_sp
+from openpilot.system.ui.sunnypilot.widgets.list_view import option_item_sp, toggle_item_sp
 
 PREBUILT_PATH = os.path.join(Paths.comma_home(), "prebuilt") if PC else "/data/openpilot/prebuilt"
+
+# index -> watts, 0 means no limit
+CHESTNUT_POWER_LIMIT_VALUES = {0: 0, **{i: 40 + i * 10 for i in range(1, 17)}}
 
 
 class DeveloperLayoutSP(DeveloperLayout):
@@ -52,7 +55,19 @@ class DeveloperLayoutSP(DeveloperLayout):
 
     self.error_log_btn = button_item(tr("Error Log"), tr("VIEW"), tr("View the error log for sunnypilot crashes."), callback=self._on_error_log_clicked)
 
-    self.items: list = [self.show_advanced_controls, self.enable_github_runner_toggle, self.enable_copyparty_toggle, self.prebuilt_toggle, self.error_log_btn,]
+    self.chestnut_power_limit = option_item_sp(
+      title=tr("Chestnut GPU Power Limit"),
+      param="ChestnutPowerLimitW",
+      min_value=0,
+      max_value=max(CHESTNUT_POWER_LIMIT_VALUES),
+      description=tr("Cap the power drawn by the GPU in the Chestnut.<br>Applies the next time the device goes onroad."),
+      enabled=ui_state.is_offroad,
+      value_map=CHESTNUT_POWER_LIMIT_VALUES,
+      label_callback=lambda watts: tr("Default") if not watts else f"{watts} W",
+    )
+
+    self.items: list = [self.show_advanced_controls, self.enable_github_runner_toggle, self.enable_copyparty_toggle, self.prebuilt_toggle, self.error_log_btn,
+                        self.chestnut_power_limit]
 
   @staticmethod
   def _on_prebuilt_toggled(state):
@@ -102,5 +117,6 @@ class DeveloperLayoutSP(DeveloperLayout):
       self.prebuilt_toggle.set_description(tr("Quickboot mode requires updates to be disabled.<br>Enable 'Disable Updates' in the Software panel first."))
 
     self.enable_copyparty_toggle.set_visible(show_advanced)
+    self.chestnut_power_limit.set_visible(show_advanced)
     self.enable_github_runner_toggle.set_visible(show_advanced and not self._is_release_branch)
     self.error_log_btn.set_visible(not self._is_release_branch)

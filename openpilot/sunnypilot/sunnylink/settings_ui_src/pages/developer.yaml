@@ -135,3 +135,28 @@ sections:
       key: DisableUpdates
       equals: true
     - $ref: '#/macros/advanced_only'
+  - key: ChestnutPowerLimitW
+    widget: option
+    title: Chestnut GPU Power Limit
+    description: Cap the power drawn by the GPU in the Chestnut. Applies the next time the device goes onroad.
+    options:
+    - {value: 0, label: Default}
+    - {value: 50, label: 50 W}
+    - {value: 60, label: 60 W}
+    - {value: 70, label: 70 W}
+    - {value: 80, label: 80 W}
+    - {value: 90, label: 90 W}
+    - {value: 100, label: 100 W}
+    - {value: 110, label: 110 W}
+    - {value: 120, label: 120 W}
+    - {value: 130, label: 130 W}
+    - {value: 140, label: 140 W}
+    - {value: 150, label: 150 W}
+    - {value: 160, label: 160 W}
+    - {value: 170, label: 170 W}
+    - {value: 180, label: 180 W}
+    - {value: 190, label: 190 W}
+    - {value: 200, label: 200 W}
+    enablement:
+    - $ref: '#/macros/offroad'
+    - $ref: '#/macros/advanced_only'
