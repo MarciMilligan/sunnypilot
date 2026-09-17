@@ -83,10 +83,12 @@ class TestUnifiedFrameResize(OpenpilotTestCase):
 
     frames = {key: np.full(3735552, value, dtype=np.uint8) for key, value in (('img', 7), ('big_img', 9))}
     cameras = DEVICE_CAMERAS[('tizi', 'ox03c10')]
+    rpy_calib = np.array([.02, -.03, .01])
     transforms = {}
     for key, camera, wide in (('img', cameras.narrow_road, False), ('big_img', cameras.wide_road, True)):
-      native = get_warp_matrix(np.array([.02, -.03, .01]), camera.intrinsics, wide).astype(np.float32)
-      transforms[key] = CameraOffsetHelper.apply_camera_offset(native, camera.intrinsics, 1.22, .2)
+      native = get_warp_matrix(rpy_calib, camera.intrinsics, wide).astype(np.float32)
+      v_horizon = CameraOffsetHelper.get_v_horizon(camera.intrinsics, rpy_calib)
+      transforms[key] = CameraOffsetHelper.apply_camera_offset(native, height=1.22, offset_param=.2, v_horizon=v_horizon)
     original_transforms = {key: value.copy() for key, value in transforms.items()}
     scale = np.diag([1344 / 1928, 760 / 1208, 1]).astype(np.float32)
     inputs = {state.desire_key: np.zeros(8, dtype=np.float32)}
