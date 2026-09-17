@@ -38,7 +38,12 @@ on:
         description: 'Hugging Face dataset repository (e.g. MarciMilligan/sunnypilot_models_v1)'
         required: false
         type: string
-        default: 'MarciMilligan/sunnypilot_models_v1'
+        default: 'sunnypilot/sunnypilot_models_v1'
+      docs_repo:
+        description: 'GitHub repo holding the driving_models JSON on its gh-pages branch'
+        required: false
+        type: string
+        default: 'sunnypilot/sunnypilot-models'
       set_min_version:
         description: 'Minimum selector version'
         required: false
@@ -106,7 +111,12 @@ on:
         description: 'Hugging Face dataset repository'
         required: false
         type: string
-        default: 'MarciMilligan/sunnypilot_models_v1'
+        default: 'sunnypilot/sunnypilot_models_v1'
+      docs_repo:
+        description: 'GitHub repo holding the driving_models JSON on its gh-pages branch'
+        required: false
+        type: string
+        default: 'sunnypilot/sunnypilot-models'
 env:
   RECOMPILED_DIR: recompiled${{ inputs.recompiled_dir }}
   JSON_FILE: docs/docs/driving_models_${{ inputs.target_hardware == 'chestnut' && 'chestnut_v' || 'v' }}${{ inputs.json_version }}.json
@@ -136,7 +146,7 @@ jobs:
       - name: Checkout docs repo
         uses: actions/checkout@v4
         with:
-          repository: MarciMilligan/sunnypilot-models
+          repository: ${{ inputs.docs_repo }}
           ref: gh-pages
           path: docs
           ssh-key: ${{ secrets.CI_SUNNYPILOT_DOCS_PRIVATE_KEY }}
