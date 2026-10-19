@@ -5,6 +5,7 @@ This file is part of sunnypilot and is licensed under the MIT License.
 See the LICENSE.md file in the root directory for more details.
 """
 
+import pickle
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -57,9 +58,13 @@ def cpu_queues(monkeypatch):
                      make_stock_queues(input_shapes, frame_skip, device='CPU', frame_copy_size=frame_copy_size))
 
 
-def unified_model_factory(tmp_path, monkeypatch, patch_modeld, cpu_queues):
+def healthy_chestnut(monkeypatch):
+  error_state = SimpleNamespace(host=SimpleNamespace(view=lambda fmt: [0]))
+  monkeypatch.setattr(modeld_module, 'Device', dict.fromkeys(('AMD', 'CPU'), SimpleNamespace(error_state=error_state)))
+
+
+def unified_model_factory(tmp_path, monkeypatch, patch_modeld, cpu_queues, healthy_chestnut):
   from openpilot.common.hardware import hw
-  from openpilot.sunnypilot.modeld_v2.helpers import dump_oob
 
   bundle = DummyBundle(models=[DummyModel('supercombo', 'driving_test_tinygrad.pkl')])
   patch_modeld(bundle)
@@ -73,8 +78,7 @@ def unified_model_factory(tmp_path, monkeypatch, patch_modeld, cpu_queues):
     else:
       pkl_data = {'metadata': {'model': {'input_shapes': SHAPES, 'output_slices': {}}, 'warp_dev': 'CPU'},
                   'run_policy': _unified_jit, cam_size: _warp_jit}
-    with open(tmp_path / 'driving_test_tinygrad.pkl', 'wb') as f:
-      dump_oob(pkl_data, f)
+    (tmp_path / 'driving_test_tinygrad.pkl').write_bytes(pickle.dumps(pkl_data))
     monkeypatch.setattr(modeld_module, 'COMMA_HARDWARE', comma_hardware)
     monkeypatch.setattr(modeld_module.HARDWARE, 'get_device_type', lambda: device_type)
     return ModelState(cam_w=cam_size[0], cam_h=cam_size[1], chestnut=chestnut)
@@ -154,11 +158,9 @@ class TestUnifiedFrameResize(OpenpilotTestCase):
   @parameterized.expand(['supercombo_non20hz', 'vision_policy_split'], names=['archetype'])
   def test_separate_warp_is_not_resized(self, archetype, tmp_path, monkeypatch, patch_modeld, cpu_queues, missing_resize_library):
     from openpilot.common.hardware import hw
-    from openpilot.sunnypilot.modeld_v2.helpers import dump_oob
 
     arch = ARCHETYPES[archetype]
-    with open(tmp_path / 'driving_test_tinygrad.pkl', 'wb') as f:
-      dump_oob(tests_helpers.make_pkl_data(arch), f)
+    (tmp_path / 'driving_test_tinygrad.pkl').write_bytes(pickle.dumps(tests_helpers.make_pkl_data(arch)))
     patch_modeld(tests_helpers.make_bundle(arch))
     monkeypatch.setattr(hw.Paths, 'model_root', staticmethod(lambda: str(tmp_path)))
     monkeypatch.setattr(modeld_module, 'COMMA_HARDWARE', True)
