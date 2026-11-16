@@ -32,6 +32,9 @@ def _run_model(**kwargs):
   return None
 
 
+_run_model.input_names = ['host']
+
+
 def native_model_factory(tmp_path, monkeypatch, patch_modeld):
   from openpilot.common.hardware import hw
 
@@ -106,3 +109,27 @@ class TestNativeFrameResize(OpenpilotTestCase):
     for i in range(2):
       np.testing.assert_array_equal(adapter.frames[i], source[:SOURCE_COPY_SIZE])
       np.testing.assert_array_equal(state.numpy_inputs['tfm'][i], transform)
+
+  @parameterized.expand([True, False], names=['visionipc'])
+  def test_split_frames_keep_direct_inputs(self, visionipc, native_model_factory, monkeypatch):
+    monkeypatch.setattr(_run_model, 'input_names', ['big_frame', 'frame', 'host'])
+    state = native_model_factory(chestnut=False)
+    adapter = state.adapter
+    self.assertIsNone(adapter.frame_resize)
+    self.assertEqual(adapter.frames.size, 0)
+    state.warmup()
+
+    sources = {key: np.full(SOURCE_BUFFER_SIZE, value, dtype=np.uint8) for key, value in (('img', 7), ('big_img', 9))}
+    frames = {key: SimpleNamespace(data=memoryview(source)) if visionipc else source for key, source in sources.items()}
+    transforms = dict.fromkeys(state.vision_input_names, np.eye(3, dtype=np.float32))
+    for value in (17, 23):
+      for i, source in enumerate(sources.values()):
+        source[:] = value + i
+      self.assertEqual(state.run(frames, transforms, {state.desire_key: np.zeros(8, dtype=np.float32)}), {})
+      for key, name in (('img', 'frame'), ('big_img', 'big_frame')):
+        np.testing.assert_array_equal(adapter.frame_inputs[name].numpy(), sources[key][:SOURCE_COPY_SIZE])
+      self.assertEqual(len(adapter._blob_cache), 2 if visionipc else 0)
+
+    adapter.reset_warmup_buffers()
+    self.assertEqual(adapter.frame_inputs, {})
+    self.assertEqual(adapter._blob_cache, {})
