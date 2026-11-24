@@ -291,9 +291,8 @@ SConscript([
   'openpilot/selfdrive/locationd/SConscript',
   'openpilot/selfdrive/modeld/SConscript',
   'openpilot/selfdrive/ui/SConscript',
+  'openpilot/sunnypilot/modeld_v2/SConscript',
 ])
-
-SConscript(['openpilot/sunnypilot/SConscript'])
 
 # Build desktop-only tools
 if GetOption('extras') and arch != "comma_arm64":
